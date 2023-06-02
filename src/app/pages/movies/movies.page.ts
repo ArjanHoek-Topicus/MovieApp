@@ -24,16 +24,8 @@ export class MoviesPage implements OnInit {
     this.loadMovies();
   }
 
-  async loadMovies(event?: InfiniteScrollCustomEvent) {
-    const loading = await this.loadingCtrl.create({
-      message: 'Dismissing after 3 seconds...',
-      duration: 3000,
-    });
-
-    loading.present();
-
+  loadMovies(event?: InfiniteScrollCustomEvent) {
     const handleLoading = ({ total_pages }: IMoviesResult) => {
-      loading.dismiss();
       if (event) {
         event.target.complete();
         event.target.disabled = total_pages === this.currentPageSubject.value;
