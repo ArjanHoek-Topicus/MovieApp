@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { InfiniteScrollCustomEvent, LoadingController } from '@ionic/angular';
-import { BehaviorSubject, Observable, map, merge, of, tap } from 'rxjs';
+import { InfiniteScrollCustomEvent } from '@ionic/angular';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { IMovieDetailsResult } from 'src/app/models/IMovieDetailsResult';
 import { IMoviesResult } from 'src/app/models/IMoviesResult';
 import { MovieService } from 'src/app/services/movie.service';
@@ -15,26 +15,16 @@ export class MoviesPage implements OnInit {
   public movies$: Observable<any[]> = this.moviesSubject.asObservable();
   private currentPageSubject = new BehaviorSubject<number>(1);
 
-  constructor(
-    private movieService: MovieService,
-    private loadingCtrl: LoadingController
-  ) {}
+  constructor(private movieService: MovieService) {}
 
   ngOnInit() {
     this.loadMovies();
   }
 
   loadMovies(event?: InfiniteScrollCustomEvent) {
-    const handleLoading = ({ total_pages }: IMoviesResult) => {
-      if (event) {
-        event.target.complete();
-        event.target.disabled = total_pages === this.currentPageSubject.value;
-      }
-    };
-
     this.movieService
       .getTopRatedMovies(this.currentPageSubject.value)
-      .pipe(tap(handleLoading))
+      .pipe(handleLoading(this.currentPageSubject.value, event))
       .subscribe((data) => {
         this.moviesSubject.next([...this.moviesSubject.value, ...data.results]);
       });
@@ -45,3 +35,16 @@ export class MoviesPage implements OnInit {
     this.loadMovies(event as InfiniteScrollCustomEvent);
   }
 }
+
+export const handleLoading =
+  (currentPage: number, event?: InfiniteScrollCustomEvent) =>
+  (obs$: Observable<IMoviesResult>) => {
+    return obs$.pipe(
+      tap((val) => {
+        if (event) {
+          event.target.complete();
+          event.target.disabled = val.total_pages === currentPage;
+        }
+      })
+    );
+  };
