@@ -6,9 +6,13 @@
 
 <ion-content>
   <ion-list>
-    <ion-item button *ngFor="let movie of movies" [routerLink]="[movie.id]">
+    <ion-item
+      button
+      *ngFor="let movie of movies$ | async"
+      [routerLink]="[movie.id]"
+    >
       <ion-avatar slot="start">
-        <img [src]="baseUrl + '/w92' + movie.poster_path" />
+        <img [src]="movie.image_path" />
       </ion-avatar>
 
       <ion-label>

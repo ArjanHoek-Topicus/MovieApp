@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, delay, map } from 'rxjs';
-import { environment as env } from 'src/environments/environment';
-
-interface ApiResult {
-  page: number;
-  results: any[];
-  total_pages: number;
-  total_results: number;
-}
+import { Observable, catchError, from, map, of, tap } from 'rxjs';
+import { environment as env, environment } from 'src/environments/environment';
+import { IMoviesResult } from '../models/IMoviesResult';
+import { IMovieDetailsResult } from '../models/IMovieDetailsResult';
 
 @Injectable({
   providedIn: 'root',
@@ -16,17 +11,32 @@ interface ApiResult {
 export class MovieService {
   constructor(private http: HttpClient) {}
 
-  getTopRatedMovies(page = 1): Observable<ApiResult> {
+  getTopRatedMovies(page = 1): Observable<IMoviesResult> {
     return this.http
-      .get<ApiResult>(
+      .get<IMoviesResult>(
         `${env.baseUrl}/movie/popular?api_key=${env.apiKey}&page=${page}`
       )
-      .pipe(delay(1000));
+      .pipe(
+        map((data) => ({
+          ...data,
+          results: data.results.map((movie) => ({
+            ...movie,
+            image_path: `${environment.images}/w92${movie.poster_path}`,
+          })),
+        }))
+      );
   }
 
-  getMovieDetails(id: string) {
+  getMovieDetails(id: string): Observable<IMovieDetailsResult> {
     return this.http
-      .get(`${env.baseUrl}/movie/${id}?api_key=${env.apiKey}`)
-      .pipe(delay(1000));
+      .get<IMovieDetailsResult>(
+        `${env.baseUrl}/movie/${id}?api_key=${env.apiKey}`
+      )
+      .pipe(
+        map((movie) => ({
+          ...movie,
+          image_path: `${environment.images}/w400${movie.poster_path}`,
+        }))
+      );
   }
 }

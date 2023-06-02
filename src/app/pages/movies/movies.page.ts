@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import {
-  InfiniteScrollCustomEvent,
-  IonInfiniteScroll,
-  LoadingController,
-} from '@ionic/angular';
+import { InfiniteScrollCustomEvent, LoadingController } from '@ionic/angular';
+import { BehaviorSubject, Observable, map, merge, of, tap } from 'rxjs';
+import { IMovieDetailsResult } from 'src/app/models/IMovieDetailsResult';
+import { IMoviesResult } from 'src/app/models/IMoviesResult';
 import { MovieService } from 'src/app/services/movie.service';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-movies',
@@ -13,9 +11,9 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./movies.page.scss'],
 })
 export class MoviesPage implements OnInit {
-  public movies: any[] = [];
-  private currentPage = 1;
-  baseUrl = environment.images;
+  private moviesSubject = new BehaviorSubject<IMovieDetailsResult[]>([]);
+  public movies$: Observable<any[]> = this.moviesSubject.asObservable();
+  private currentPageSubject = new BehaviorSubject<number>(1);
 
   constructor(
     private movieService: MovieService,
@@ -34,23 +32,24 @@ export class MoviesPage implements OnInit {
 
     loading.present();
 
+    const handleLoading = ({ total_pages }: IMoviesResult) => {
+      loading.dismiss();
+      if (event) {
+        event.target.complete();
+        event.target.disabled = total_pages === this.currentPageSubject.value;
+      }
+    };
+
     this.movieService
-      .getTopRatedMovies(this.currentPage)
-      .subscribe(({ results, total_pages }) => {
-        loading.dismiss();
-
-        this.movies.push(...results);
-
-        event?.target.complete();
-
-        if (event) {
-          event.target.disabled = total_pages === this.currentPage;
-        }
+      .getTopRatedMovies(this.currentPageSubject.value)
+      .pipe(tap(handleLoading))
+      .subscribe((data) => {
+        this.moviesSubject.next([...this.moviesSubject.value, ...data.results]);
       });
   }
 
   public loadMore(event: any) {
-    this.currentPage++;
+    this.currentPageSubject.next(this.currentPageSubject.value + 1);
     this.loadMovies(event as InfiniteScrollCustomEvent);
   }
 }

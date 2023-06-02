@@ -1,16 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { IMovieDetailsResult } from 'src/app/models/IMovieDetailsResult';
 import { MovieService } from 'src/app/services/movie.service';
-import { environment } from 'src/environments/environment';
-
 @Component({
   selector: 'app-movie-details',
   templateUrl: './movie-details.page.html',
   styleUrls: ['./movie-details.page.scss'],
 })
 export class MovieDetailsPage {
-  movie: any = null;
-  baseUrl = environment.images;
+  movie!: IMovieDetailsResult;
 
   constructor(
     private route: ActivatedRoute,
